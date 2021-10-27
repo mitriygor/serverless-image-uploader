@@ -1,0 +1,155 @@
+{
+  "Comment": "This is your state machine",
+  "StartAt": "hasImageType",
+  "States": {
+    "hasImageType": {
+      "Type": "Task",
+      "Resource": "XXXXXXX",
+      "TimeoutSeconds": 30,
+      "ResultPath": "$.results.hasImageType",
+      "Next": "isImage",
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "Next": "failImageTypeVerification"
+        }
+      ]
+    },
+    "isImage": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Variable": "$.results.hasImageType",
+          "BooleanEquals": true,
+          "Next": "processImage"
+        }
+      ],
+      "Default": "deleteSourceFile"
+    },
+    "processImage": {
+      "Type": "Parallel",
+      "Next": "deleteSourceFile",
+      "ResultPath": "$.results.images",
+      "Branches": [
+        {
+          "StartAt": "copyImage",
+          "States": {
+            "copyImage": {
+              "Type": "Task",
+              "Resource": "XXXXXXX",
+              "TimeoutSeconds": 30,
+              "ResultPath": "$.image.original",
+              "OutputPath": "$.image",
+              "End": true,
+              "Retry": [
+                {
+                  "ErrorEquals": [
+                    "States.TaskFailed",
+                    "States.Timeout"
+                  ],
+                  "IntervalSeconds": 5,
+                  "MaxAttempts": 3,
+                  "BackoffRate": 3
+                },
+                {
+                  "ErrorEquals": [
+                    "States.ALL"
+                  ],
+                  "IntervalSeconds": 5,
+                  "MaxAttempts": 3,
+                  "BackoffRate": 3
+                }
+              ],
+              "Catch": [
+                {
+                  "ErrorEquals": [
+                    "States.ALL"
+                  ],
+                  "Next": "failCopyImage"
+                }
+              ]
+            },
+            "failCopyImage": {
+              "Type": "Fail",
+              "Error": "CopyError",
+              "Cause": "Executing the copy fails"
+            }
+          }
+        },
+        {
+          "StartAt": "resizeImage",
+          "States": {
+            "resizeImage": {
+              "Type": "Task",
+              "Resource": "XXXXXXX",
+              "TimeoutSeconds": 30,
+              "ResultPath": "$.image.resized",
+              "OutputPath": "$.image",
+              "End": true,
+              "Retry": [
+                {
+                  "ErrorEquals": [
+                    "States.TaskFailed",
+                    "States.Timeout"
+                  ],
+                  "IntervalSeconds": 5,
+                  "MaxAttempts": 3,
+                  "BackoffRate": 3
+                },
+                {
+                  "ErrorEquals": [
+                    "States.ALL"
+                  ],
+                  "IntervalSeconds": 5,
+                  "MaxAttempts": 2,
+                  "BackoffRate": 2
+                }
+              ],
+              "Catch": [
+                {
+                  "ErrorEquals": [
+                    "States.ALL"
+                  ],
+                  "Next": "failResizeImage"
+                }
+              ]
+            },
+            "failResizeImage": {
+              "Type": "Fail",
+              "Error": "ResizeError",
+              "Cause": "Executing the resize fails"
+            }
+          }
+        }
+      ]
+    },
+    "deleteSourceFile": {
+      "Type": "Task",
+      "Resource": "XXXXXXX",
+      "TimeoutSeconds": 30,
+      "ResultPath": "$.results.deletionStatus",
+      "OutputPath": "$.results",
+      "End": true,
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "Next": "failDeleteSourceFile"
+        }
+      ]
+    },
+    "failDeleteSourceFile": {
+      "Type": "Fail",
+      "Error": "GenericError",
+      "Cause": "Executing the state machine fails"
+    },
+    "failImageTypeVerification": {
+      "Type": "Fail",
+      "Error": "GenericError",
+      "Cause": "Executing the state machine fails"
+    }
+  }
+}

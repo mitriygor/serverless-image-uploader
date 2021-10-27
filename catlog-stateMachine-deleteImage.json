@@ -1,0 +1,86 @@
+{
+  "Comment": "This is your state machine",
+  "StartAt": "deleteImage",
+  "States": {
+    "deleteImage": {
+      "Type": "Parallel",
+      "End": true,
+      "ResultPath": "$.results.images",
+      "Branches": [
+        {
+          "StartAt": "deleteOriginalImage",
+          "States": {
+            "deleteOriginalImage": {
+              "Type": "Task",
+              "Resource": "XXXXXXX",
+              "TimeoutSeconds": 30,
+              "ResultPath": "$.results.deletionStatus",
+              "OutputPath": "$.results",
+              "Next": "deleteThumbnail",
+              "Catch": [
+                {
+                  "ErrorEquals": [
+                    "States.ALL"
+                  ],
+                  "Next": "failResizeImage"
+                }
+              ]
+            },
+            "failResizeImage": {
+              "Type": "Fail",
+              "Error": "DeleteOriginalImage",
+              "Cause": "Executing the delete fails"
+            },
+            "deleteThumbnail": {
+              "Type": "Task",
+              "Resource": "XXXXXXX",
+              "TimeoutSeconds": 30,
+              "ResultPath": "$.results.deletionStatus",
+              "OutputPath": "$.results",
+              "End": true,
+              "Catch": [
+                {
+                  "ErrorEquals": [
+                    "States.ALL"
+                  ],
+                  "Next": "failDeleteThumbnail"
+                }
+              ]
+            },
+            "failDeleteThumbnail": {
+              "Type": "Fail",
+              "Error": "DeleteThumbnail",
+              "Cause": "Executing the delete thumbnail fails"
+            }
+          }
+        },
+        {
+          "StartAt": "deleteDynamoDBRecord",
+          "States": {
+            "deleteDynamoDBRecord": {
+              "Type": "Task",
+              "Resource": "XXXXXXX",
+              "TimeoutSeconds": 30,
+              "ResultPath": "$.results.deletionStatus",
+              "OutputPath": "$.results",
+              "End": true,
+              "Catch": [
+                {
+                  "ErrorEquals": [
+                    "States.ALL"
+                  ],
+                  "Next": "failDeleteDynamoDBRecord"
+                }
+              ]
+            },
+            "failDeleteDynamoDBRecord": {
+              "Type": "Fail",
+              "Error": "DeleteDynamoDBRecord",
+              "Cause": "Executing the delete record fails"
+            }
+          }
+        }
+      ]
+    }
+  }
+}
