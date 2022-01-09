@@ -32,8 +32,7 @@ Username/Email: qmkcwlxdb@laste.ml
 
 Password: q2w3e4r5t6y
 
-After login, there is supposed to be presented the home page:
-![alt text](images/index.png)
+After login, there is supposed to be presented the home page
 
 
 
